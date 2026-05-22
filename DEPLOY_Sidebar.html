@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ABS Timecode Shifter</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Design System & Global Variables */
+:root {
+  --bg-primary: #0b0f19;
+  --bg-secondary: #131a2b;
+  --bg-glass: rgba(30, 41, 59, 0.4);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(99, 102, 241, 0.5);
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-disabled: #475569;
+  
+  --accent-primary: #6366f1;
+  --accent-secondary: #a855f7;
+  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  --accent-hover: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+  
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  
+  --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --transition-speed: 0.25s;
+}
+
+/* Reset and Global Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  padding: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 100%;
+}
+
+/* Icons styling */
+.icon {
+  width: 12px;
+  height: 12px;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+/* Header */
+.app-header {
+  padding: 8px 4px;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--accent-primary);
+  filter: drop-shadow(0 0 6px rgba(99, 102, 241, 0.5));
+  flex-shrink: 0;
+}
+
+.logo-text h1 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logo-text p {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* Section Panel */
+.section-panel {
+  background-color: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  padding: 12px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition: border-color var(--transition-speed);
+}
+
+.section-panel:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Segmented Control */
+.segmented-control {
+  display: flex;
+  background-color: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  padding: 2px;
+  width: 100%;
+}
+
+.segment-btn {
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 8px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--transition-speed) ease;
+  white-space: nowrap;
+  text-align: center;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.segment-btn:hover:not(.active) {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.segment-btn.active {
+  background: var(--accent-gradient);
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.segmented-control.mini .segment-btn {
+  padding: 5px 2px;
+  font-size: 10px;
+}
+
+/* Tabs */
+.tabs-control {
+  display: flex;
+  border-bottom: 1px solid var(--border-glass);
+  gap: 10px;
+  width: 100%;
+}
+
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 0;
+  cursor: pointer;
+  position: relative;
+  text-align: center;
+  transition: color var(--transition-speed);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.tab-btn:hover:not(.active) {
+  color: var(--text-primary);
+}
+
+.tab-btn.active {
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  background: var(--accent-gradient);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.8);
+}
+
+.tab-content {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.tab-content.active {
+  display: flex;
+  animation: fadeIn 0.25s ease-out;
+}
+
+/* Input Groups */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-group label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Direction Toggle */
+.direction-toggle-container {
+  display: flex;
+  background-color: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  padding: 2px;
+  width: 100%;
+}
+
+.dir-btn {
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all var(--transition-speed) ease;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.dir-btn .icon {
+  transition: transform var(--transition-speed) ease;
+}
+
+.dir-btn:hover:not(.active) {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dir-btn.active {
+  background: var(--accent-gradient);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff !important;
+  font-weight: 600;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+#dir-forward.active .icon {
+  color: #ffffff !important;
+  transform: translateY(1px);
+}
+
+#dir-backward.active .icon {
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+/* Timecode Input Row */
+.timecode-input-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  background-color: rgba(15, 23, 42, 0.5);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  padding: 6px 4px;
+  transition: border-color var(--transition-speed);
+}
+
+.timecode-input-row:focus-within {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.15);
+}
+
+.input-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 48px;
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+
+.input-box input {
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  padding: 2px 0;
+}
+
+/* Hide spin buttons */
+.input-box input::-webkit-outer-spin-button,
+.input-box input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.input-box input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.input-box span {
+  font-size: 9px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.colon {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding-bottom: 12px;
+  width: 8px;
+  text-align: center;
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+
+/* Detected Info Box */
+.detected-info-box {
+  background-color: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detected-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+.detected-value-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detected-value-row .value {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: var(--font-family);
+  color: #a5b4fc;
+}
+
+.detected-value-row .value.none {
+  color: var(--text-disabled);
+  font-weight: 400;
+  font-style: italic;
+}
+
+/* Target Inputs */
+#input-target {
+  width: 100%;
+  background-color: rgba(15, 23, 42, 0.5);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 12px;
+  outline: none;
+  transition: all var(--transition-speed);
+}
+
+#input-target:focus {
+  border-color: var(--border-focus);
+}
+
+#input-target:disabled {
+  background-color: rgba(15, 23, 42, 0.2);
+  color: var(--text-disabled);
+  border-color: rgba(255, 255, 255, 0.03);
+  cursor: not-allowed;
+}
+
+.input-hint {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-top: 2px;
+  display: block;
+}
+
+/* Buttons */
+.btn-icon {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-speed);
+}
+
+.btn-icon:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+/* Collapsible Advanced Section */
+.collapsible-header {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.collapsible-header .title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.collapsible-header .chevron {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--transition-speed) ease;
+}
+
+.collapsible-panel.open .chevron {
+  transform: rotate(180deg);
+}
+
+.collapsible-content {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.collapsible-panel.open .collapsible-content {
+  display: flex;
+  animation: slideDown 0.2s ease-out;
+}
+
+select {
+  width: 100%;
+  background-color: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: 12px;
+  padding: 8px;
+  outline: none;
+}
+
+select:focus {
+  border-color: var(--border-focus);
+}
+
+/* Checkbox */
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-container input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+}
+
+.checkbox-container label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Action button */
+.action-panel {
+  margin-top: 4px;
+}
+
+.btn-primary {
+  width: 100%;
+  background: var(--accent-gradient);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-speed) ease;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  background: var(--text-disabled);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Spinner Loader */
+.btn-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  animation: rotate 2s linear infinite;
+  width: 20px;
+  height: 20px;
+}
+
+.spinner .path {
+  stroke: #ffffff;
+  stroke-linecap: round;
+  animation: dash 1.5s ease-in-out infinite;
+}
+
+/* Status Panel */
+.status-panel {
+  border: 1px solid var(--border-glass);
+  background-color: var(--bg-glass);
+  border-radius: 12px;
+  padding: 12px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: all var(--transition-speed) ease;
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: background-color var(--transition-speed);
+}
+
+.status-indicator.idle {
+  background-color: var(--text-disabled);
+}
+
+.status-indicator.running {
+  background-color: var(--warning);
+  box-shadow: 0 0 8px var(--warning);
+  animation: pulse 1.5s infinite;
+}
+
+.status-indicator.success {
+  background-color: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+
+.status-indicator.error {
+  background-color: var(--error);
+  box-shadow: 0 0 8px var(--error);
+}
+
+.status-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+}
+
+.status-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; height: 0; overflow: hidden; }
+  to { opacity: 1; height: auto; }
+}
+
+@keyframes rotate {
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes dash {
+  0% { stroke-dasharray: 1, 150; stroke-dashoffset: 0; }
+  50% { stroke-dasharray: 90, 150; stroke-dashoffset: -35; }
+  100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-container">
+        <svg class="logo-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <div class="logo-text">
+          <h1>ABS Timecode Shifter</h1>
+          <p>Sync & shift timecodes in your doc</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Scope Selector Section -->
+    <section class="section-panel">
+      <h2 class="section-title">
+        <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        Scope
+      </h2>
+      <div class="segmented-control" id="scope-control">
+        <button class="segment-btn active" data-value="selection">Only Selection</button>
+        <button class="segment-btn" data-value="from-selection">From Cursor to End</button>
+        <button class="segment-btn" data-value="document">Entire Doc</button>
+      </div>
+    </section>
+
+    <!-- Shift Mode Section -->
+    <section class="section-panel">
+      <div class="tabs-control">
+        <button class="tab-btn active" data-tab="tab-amount">Shift by Amount</button>
+        <button class="tab-btn" data-tab="tab-align" id="tab-align-trigger">Align First Timecode</button>
+      </div>
+
+      <div class="tab-content active" id="tab-amount">
+        <div class="input-group">
+          <label>Shift Direction</label>
+          <div class="direction-toggle-container">
+            <button class="dir-btn active" id="dir-forward" data-dir="1">
+              <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <polyline points="19 12 12 19 5 12"></polyline>
+              </svg>
+              Forward (+)
+            </button>
+            <button class="dir-btn" id="dir-backward" data-dir="-1">
+              <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <polyline points="5 12 12 5 19 12"></polyline>
+              </svg>
+              Backward (-)
+            </button>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Shift Duration</label>
+          <div class="timecode-input-row">
+            <div class="input-box">
+              <input type="number" id="input-h" min="0" max="99" placeholder="00" value="0">
+              <span>H</span>
+            </div>
+            <div class="colon">:</div>
+            <div class="input-box">
+              <input type="number" id="input-m" min="0" max="59" placeholder="00" value="0">
+              <span>M</span>
+            </div>
+            <div class="colon">:</div>
+            <div class="input-box">
+              <input type="number" id="input-s" min="0" max="59" placeholder="00" value="0">
+              <span>S</span>
+            </div>
+            <div class="colon" id="subsecond-separator">:</div>
+            <div class="input-box">
+              <input type="number" id="input-sub" min="0" max="59" placeholder="00" value="0">
+              <span id="subsecond-label">F</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-align">
+        <div class="detected-info-box">
+          <div class="detected-label">Detected First Timecode in Scope:</div>
+          <div class="detected-value-row">
+            <span class="value" id="detected-timecode">None detected</span>
+            <button class="btn-icon" id="btn-scan" title="Scan Document">
+              <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="input-target">Change Target First Timecode To</label>
+          <div class="target-input-container">
+            <input type="text" id="input-target" placeholder="e.g. 01:00:00:00" disabled>
+            <span class="input-hint">Will auto-format to match original style</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Advanced Settings Section -->
+    <section class="section-panel collapsible-panel">
+      <button class="collapsible-header" id="btn-toggle-adv">
+        <span class="title">
+          <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          Advanced Settings
+        </span>
+        <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+
+      <div class="collapsible-content" id="adv-content">
+        <div class="input-group" id="group-framerate">
+          <label for="select-framerate">Frame Rate (fps)</label>
+          <select id="select-framerate">
+            <option value="23.976">23.976 fps</option>
+            <option value="24" selected>24 fps</option>
+            <option value="25">25 fps</option>
+            <option value="29.97">29.97 fps</option>
+            <option value="30">30 fps</option>
+            <option value="50">50 fps</option>
+            <option value="59.94">59.94 fps</option>
+            <option value="60">60 fps</option>
+          </select>
+        </div>
+
+        <div class="input-group-row" id="group-dropframe" style="display: none;">
+          <div class="checkbox-container">
+            <input type="checkbox" id="check-dropframe" checked>
+            <label for="check-dropframe">Use Drop-Frame Math</label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Run Action -->
+    <div class="action-panel">
+      <button class="btn-primary" id="btn-run">
+        <span class="btn-text">Shift Timecodes</span>
+        <div class="btn-loader" style="display: none;">
+          <svg class="spinner" width="20" height="20" viewBox="0 0 50 50">
+            <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+          </svg>
+        </div>
+      </button>
+    </div>
+
+    <!-- Status panel -->
+    <div class="status-panel" id="status-card">
+      <div class="status-header">
+        <div class="status-indicator idle" id="status-indicator"></div>
+        <span class="status-title" id="status-title">Ready</span>
+      </div>
+      <p class="status-desc" id="status-desc">Click "Shift Timecodes" to begin.</p>
+    </div>
+  </div>
+
+  <script>
+    /**
+ * TimecodeUtils - Shared library for parsing, shifting, and formatting timecodes.
+ * Works in both Node.js (for tests) and Google Apps Script (inlined).
+ */
+const TimecodeUtils = {
+  // Regex to detect timecode strings: HH:MM:SS or MM:SS, optionally with frames or fractions
+  // Examples: 01:23:45 | 23:45 | 01:23:45.678 | 01:23:45:12 | 01:23:45;20
+  TIMECODE_REGEX: /\b(?:(\d{1,2}):)?(\d{1,2}):(\d{2})(?:([.,:;])(\d{2,3}))?\b/g,
+
+  /**
+   * Check if parsed components represent a valid timecode.
+   * Minutes and seconds must be less than 60.
+   */
+  isValidTimecode(minutes, seconds) {
+    return minutes < 60 && seconds < 60;
+  },
+
+  /**
+   * Parse text and find all valid timecodes with their indices and details.
+   */
+  findTimecodes(text) {
+    const regex = new RegExp(this.TIMECODE_REGEX);
+    const matches = [];
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      const minutes = parseInt(match[2], 10);
+      const seconds = parseInt(match[3], 10);
+      if (this.isValidTimecode(minutes, seconds)) {
+        matches.push({
+          matchText: match[0],
+          index: match.index,
+          length: match[0].length,
+          hours: match[1] ? parseInt(match[1], 10) : null,
+          minutes: minutes,
+          seconds: seconds,
+          separator: match[4] || null,
+          fraction: match[5] ? parseInt(match[5], 10) : null,
+          fractionDigits: match[5] ? match[5].length : 0
+        });
+      }
+    }
+    return matches;
+  },
+
+  /**
+   * Convert a parsed timecode object to milliseconds.
+   */
+  toMilliseconds(tc, frameRate, subSecondMode, useDropFrame) {
+    let hours = tc.hours !== null ? tc.hours : 0;
+    
+    // Check if we are using drop-frame mode (only relevant if subSecondMode is 'frames' and frame rate is 29.97 or 59.94)
+    if (subSecondMode === 'frames' && useDropFrame && (frameRate === 29.97 || frameRate === 59.94)) {
+      const frames = tc.fraction !== null ? tc.fraction : 0;
+      let totalSeconds = hours * 3600 + tc.minutes * 60 + tc.seconds;
+      let frameNumber = totalSeconds * Math.round(frameRate) + frames;
+      let totalMinutes = hours * 60 + tc.minutes;
+      let dropFrames = frameRate === 29.97 ? 2 : 4;
+      let dropped = dropFrames * (totalMinutes - Math.floor(totalMinutes / 10));
+      let actualFrameNumber = frameNumber - dropped;
+      return actualFrameNumber * (1001 / Math.round(frameRate));
+    }
+    
+    // Non-drop-frame or millisecond calculations
+    let totalMs = (hours * 3600 + tc.minutes * 60 + tc.seconds) * 1000;
+    if (tc.fraction !== null) {
+      if (subSecondMode === 'frames') {
+        const fps = frameRate || 24;
+        const frameMs = 1000 / fps;
+        totalMs += tc.fraction * frameMs;
+      } else {
+        // Milliseconds/centiseconds
+        if (tc.fractionDigits === 3) {
+          totalMs += tc.fraction;
+        } else if (tc.fractionDigits === 2) {
+          totalMs += tc.fraction * 10;
+        } else if (tc.fractionDigits === 1) {
+          totalMs += tc.fraction * 100;
+        }
+      }
+    }
+    return totalMs;
+  },
+
+  /**
+   * Convert milliseconds to a timecode structure matching the original style.
+   */
+  fromMilliseconds(totalMs, originalStyle, frameRate, subSecondMode, useDropFrame) {
+    // Clamp to 0 to prevent negative timecodes
+    if (totalMs < 0) {
+      totalMs = 0;
+    }
+    
+    let hours = 0;
+    let minutes = 0;
+    let seconds = 0;
+    let fraction = null;
+    let fractionDigits = originalStyle.fractionDigits || 0;
+    let separator = originalStyle.separator || '.';
+    let hasHours = originalStyle.hours !== null;
+
+    if (subSecondMode === 'frames' && useDropFrame && (frameRate === 29.97 || frameRate === 59.94)) {
+      const dropFrames = frameRate === 29.97 ? 2 : 4;
+      const roundedFps = Math.round(frameRate);
+      const framesPer10Min = Math.round(17982 * (frameRate / 29.97));
+      const framesPerMin = Math.round(1798 * (frameRate / 29.97));
+      const firstMinFrames = roundedFps * 60; // 1800 for 30fps, 3600 for 60fps
+      
+      let frameNumber = Math.round(totalMs * (roundedFps / 1001));
+      let m = frameNumber % framesPer10Min;
+      
+      let adjustment = 0;
+      if (m >= firstMinFrames) {
+        let minIndex = 1 + Math.floor((m - firstMinFrames) / framesPerMin);
+        adjustment = minIndex * dropFrames;
+      }
+      
+      let adjustedFrameNumber = frameNumber + adjustment;
+      
+      fraction = adjustedFrameNumber % roundedFps;
+      let totalSeconds = Math.floor(adjustedFrameNumber / roundedFps);
+      hours = Math.floor(totalSeconds / 3600);
+      minutes = Math.floor((totalSeconds % 3600) / 60);
+      seconds = totalSeconds % 60;
+      
+      // Force separator to semicolon if drop frame was originally used or if we want standard formatting
+      if (separator === ':' || separator === ';') {
+        separator = ';';
+      }
+    } else {
+      if (subSecondMode === 'frames') {
+        const fps = frameRate || 24;
+        const frameDuration = 1000 / fps;
+        let totalFrames = Math.round(totalMs / frameDuration);
+        const intFps = Math.round(fps);
+        
+        fraction = totalFrames % intFps;
+        let totalSeconds = Math.floor(totalFrames / intFps);
+        hours = Math.floor(totalSeconds / 3600);
+        minutes = Math.floor((totalSeconds % 3600) / 60);
+        seconds = totalSeconds % 60;
+      } else {
+        // Milliseconds/centiseconds calculations
+        let totalSeconds = Math.floor(totalMs / 1000);
+        let ms = Math.round(totalMs % 1000);
+        if (ms >= 1000) {
+          ms -= 1000;
+          totalSeconds += 1;
+        }
+        
+        hours = Math.floor(totalSeconds / 3600);
+        minutes = Math.floor((totalSeconds % 3600) / 60);
+        seconds = totalSeconds % 60;
+        
+        if (fractionDigits > 0) {
+          if (fractionDigits === 3) {
+            fraction = ms;
+          } else if (fractionDigits === 2) {
+            fraction = Math.floor(ms / 10);
+          } else if (fractionDigits === 1) {
+            fraction = Math.floor(ms / 100);
+          }
+        }
+      }
+    }
+
+    // If the shifted value exceeds 59 minutes, we must display hours even if the original didn't.
+    if (hours > 0) {
+      hasHours = true;
+    }
+
+    return {
+      hours: hasHours ? hours : null,
+      minutes,
+      seconds,
+      fraction,
+      separator,
+      fractionDigits
+    };
+  },
+
+  /**
+   * Format a timecode object to string.
+   */
+  format(tc) {
+    const pad = (num, size = 2) => {
+      let s = num.toString();
+      while (s.length < size) s = "0" + s;
+      return s;
+    };
+
+    let result = "";
+    if (tc.hours !== null) {
+      result += pad(tc.hours) + ":";
+    }
+    result += pad(tc.minutes) + ":" + pad(tc.seconds);
+    if (tc.fraction !== null && tc.fractionDigits > 0) {
+      result += tc.separator + pad(tc.fraction, tc.fractionDigits);
+    }
+    return result;
+  },
+
+  /**
+   * Quick utility to shift a single timecode string.
+   */
+  shiftTimecodeString(tcStr, shiftAmountMs, frameRate, subSecondMode, useDropFrame) {
+    const parsed = this.findTimecodes(tcStr)[0];
+    if (!parsed) return tcStr;
+    const ms = this.toMilliseconds(parsed, frameRate, subSecondMode, useDropFrame);
+    const shiftedMs = ms + shiftAmountMs;
+    const shiftedTc = this.fromMilliseconds(shiftedMs, parsed, frameRate, subSecondMode, useDropFrame);
+    return this.format(shiftedTc);
+  }
+};
+
+// Expose to Node.js context if running in Node.js (for offline tests)
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+  module.exports = TimecodeUtils;
+}
+
+
+// Client-side Application State
+const state = {
+  scope: 'selection',       // 'selection', 'from-selection', 'document'
+  mode: 'amount',           // 'amount', 'align'
+  direction: 1,             // 1 = Forward (+), -1 = Backward (-)
+  subSecondMode: 'frames',  // always 'frames'
+  frameRate: 24,            // 23.976, 24, 25, 29.97, 30, 50, 59.94, 60
+  useDropFrame: true,       // true, false
+  detectedFirstTimecode: null // Parsed timecode object of first detected
+};
+
+// DOM Elements
+const elements = {
+  scopeControl: document.getElementById('scope-control'),
+  scopeBtns: document.querySelectorAll('#scope-control .segment-btn'),
+  
+  tabs: document.querySelectorAll('.tab-btn'),
+  tabContents: document.querySelectorAll('.tab-content'),
+  tabAlignTrigger: document.getElementById('tab-align-trigger'),
+  
+  dirForward: document.getElementById('dir-forward'),
+  dirBackward: document.getElementById('dir-backward'),
+  
+  inputH: document.getElementById('input-h'),
+  inputM: document.getElementById('input-m'),
+  inputS: document.getElementById('input-s'),
+  inputSub: document.getElementById('input-sub'),
+  subsecondSeparator: document.getElementById('subsecond-separator'),
+  subsecondLabel: document.getElementById('subsecond-label'),
+  
+  detectedTimecode: document.getElementById('detected-timecode'),
+  btnScan: document.getElementById('btn-scan'),
+  inputTarget: document.getElementById('input-target'),
+  
+  btnToggleAdv: document.getElementById('btn-toggle-adv'),
+  advContent: document.getElementById('adv-content'),
+  collapsiblePanel: document.querySelector('.collapsible-panel'),
+  
+  groupFrameRate: document.getElementById('group-framerate'),
+  selectFrameRate: document.getElementById('select-framerate'),
+  groupDropFrame: document.getElementById('group-dropframe'),
+  checkDropFrame: document.getElementById('check-dropframe'),
+  
+  btnRun: document.getElementById('btn-run'),
+  btnText: document.querySelector('.btn-text'),
+  btnLoader: document.querySelector('.btn-loader'),
+  
+  statusCard: document.getElementById('status-card'),
+  statusIndicator: document.getElementById('status-indicator'),
+  statusTitle: document.getElementById('status-title'),
+  statusDesc: document.getElementById('status-desc')
+};
+
+// Initialize Application
+function init() {
+  setupEventListeners();
+  updateSubSecondUI();
+  scanForFirstTimecode();
+}
+
+// Set up UI Event Listeners
+function setupEventListeners() {
+  // 1. Scope Selection
+  elements.scopeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      elements.scopeBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.scope = btn.dataset.value;
+      
+      // Auto-scan whenever scope changes
+      scanForFirstTimecode();
+    });
+  });
+
+  // 2. Mode Tabs
+  elements.tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      elements.tabs.forEach(b => b.classList.remove('active'));
+      elements.tabContents.forEach(c => c.classList.remove('active'));
+      
+      btn.classList.add('active');
+      const contentId = btn.dataset.tab;
+      document.getElementById(contentId).classList.add('active');
+      
+      state.mode = (contentId === 'tab-amount') ? 'amount' : 'align';
+      
+      if (state.mode === 'align') {
+        scanForFirstTimecode();
+      }
+    });
+  });
+
+  // 3. Direction Buttons
+  elements.dirForward.addEventListener('click', () => {
+    elements.dirForward.classList.add('active');
+    elements.dirBackward.classList.remove('active');
+    state.direction = 1;
+  });
+  elements.dirBackward.addEventListener('click', () => {
+    elements.dirBackward.classList.add('active');
+    elements.dirForward.classList.remove('active');
+    state.direction = -1;
+  });
+
+  // 4. Advanced Settings Toggle
+  elements.btnToggleAdv.addEventListener('click', () => {
+    elements.collapsiblePanel.classList.toggle('open');
+  });
+
+  // 5. Frame Rate & Drop Frame Change
+  elements.selectFrameRate.addEventListener('change', (e) => {
+    state.frameRate = parseFloat(e.target.value);
+    
+    // Drop frame is only standard for 29.97 and 59.94
+    if (state.frameRate === 29.97 || state.frameRate === 59.94) {
+      elements.groupDropFrame.style.display = 'block';
+    } else {
+      elements.groupDropFrame.style.display = 'none';
+      elements.checkDropFrame.checked = false;
+      state.useDropFrame = false;
+    }
+  });
+
+  elements.checkDropFrame.addEventListener('change', (e) => {
+    state.useDropFrame = e.target.checked;
+  });
+
+  // 7. Auto-focus traversal and validation for time duration inputs
+  const inputs = [elements.inputH, elements.inputM, elements.inputS, elements.inputSub];
+  inputs.forEach((input, idx) => {
+    input.addEventListener('input', (e) => {
+      let val = e.target.value;
+      // Allow only numbers
+      val = val.replace(/\D/g, '');
+      e.target.value = val;
+
+      const maxLen = (input === elements.inputSub) ? (state.subSecondMode === 'frames' ? 2 : 3) : 2;
+      
+      // Auto advance focus to the next input if max digits typed
+      if (val.length >= maxLen && idx < inputs.length - 1) {
+        inputs[idx + 1].focus();
+        inputs[idx + 1].select();
+      }
+    });
+
+    // On blur, pad with leading zeros and clamp to limits
+    input.addEventListener('blur', (e) => {
+      let val = parseInt(e.target.value, 10);
+      if (isNaN(val)) val = 0;
+      
+      if (input === elements.inputM || input === elements.inputS) {
+        if (val > 59) val = 59;
+      } else if (input === elements.inputSub) {
+        const limit = state.subSecondMode === 'frames' ? Math.round(state.frameRate) - 1 : 999;
+        if (val > limit) val = limit;
+      }
+      
+      const padLen = (input === elements.inputSub) ? (state.subSecondMode === 'frames' ? 2 : 3) : 2;
+      e.target.value = String(val).padStart(padLen, '0');
+    });
+
+    // Select all text on focus for easier typing
+    input.addEventListener('focus', () => {
+      input.select();
+    });
+  });
+
+  // 8. Refresh/Scan Button
+  elements.btnScan.addEventListener('click', scanForFirstTimecode);
+
+  // 9. Run Button
+  elements.btnRun.addEventListener('click', runTimecodeShift);
+}
+
+// Update UI elements depending on current Frame Rate / drop frame selection
+function updateSubSecondUI() {
+  // Frames Mode is always active
+  elements.subsecondSeparator.innerText = ':';
+  elements.subsecondLabel.innerText = 'F';
+  elements.inputSub.placeholder = '00';
+  
+  elements.groupFrameRate.style.display = 'block';
+  state.frameRate = parseFloat(elements.selectFrameRate.value);
+  
+  if (state.frameRate === 29.97 || state.frameRate === 59.94) {
+    elements.groupDropFrame.style.display = 'block';
+    state.useDropFrame = elements.checkDropFrame.checked;
+  } else {
+    elements.groupDropFrame.style.display = 'none';
+    elements.checkDropFrame.checked = false;
+    state.useDropFrame = false;
+  }
+  
+  const limit = Math.round(state.frameRate) - 1;
+  if (parseInt(elements.inputSub.value, 10) > limit) {
+    elements.inputSub.value = String(limit).padStart(2, '0');
+  }
+}
+
+// Scans Document to detect first timecode in current scope
+function scanForFirstTimecode() {
+  updateStatus('running', 'Scanning...', 'Detecting timecode inside scope...');
+  
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    // Offline simulation
+    setTimeout(() => {
+      const mockTimecode = '01:00:00:12';
+      handleScanSuccess(mockTimecode);
+    }, 600);
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler(handleScanSuccess)
+    .withFailureHandler(handleScanFailure)
+    .getFirstTimecode(state.scope);
+}
+
+function handleScanSuccess(response) {
+  let timecodeStr = null;
+  let timings = null;
+  if (response) {
+    if (typeof response === 'string') {
+      timecodeStr = response;
+    } else {
+      timecodeStr = response.matchText;
+      timings = response.timings;
+    }
+  }
+
+  if (timecodeStr) {
+    const parsed = TimecodeUtils.findTimecodes(timecodeStr)[0];
+    if (parsed) {
+      state.detectedFirstTimecode = parsed;
+      elements.detectedTimecode.innerText = timecodeStr;
+      elements.detectedTimecode.classList.remove('none');
+      elements.inputTarget.disabled = false;
+      elements.inputTarget.value = timecodeStr;
+      
+      let desc = `First timecode in scope: ${timecodeStr}`;
+      if (timings) {
+        console.log("ABS Timecode Shifter Scan Timings:", timings);
+        desc += ` (scanned in ${timings.total}ms)`;
+      }
+      updateStatus('idle', 'Timecode Detected', desc);
+      return;
+    }
+  }
+  
+  // No timecode found
+  state.detectedFirstTimecode = null;
+  elements.detectedTimecode.innerText = 'None detected';
+  elements.detectedTimecode.classList.add('none');
+  elements.inputTarget.disabled = true;
+  elements.inputTarget.value = '';
+  
+  let desc = 'Place cursor near or select text containing a timecode.';
+  if (timings) {
+    console.log("ABS Timecode Shifter Scan Timings:", timings);
+    desc += ` (scan took ${timings.total}ms)`;
+  }
+  updateStatus('idle', 'No Timecode Found', desc);
+}
+
+function handleScanFailure(err) {
+  state.detectedFirstTimecode = null;
+  elements.detectedTimecode.innerText = 'Scan error';
+  elements.detectedTimecode.classList.add('none');
+  elements.inputTarget.disabled = true;
+  elements.inputTarget.value = '';
+  updateStatus('error', 'Scan Failed', err.message || 'Unable to scan document.');
+}
+
+// Shift duration conversion helper
+function getShiftDurationMs() {
+  const h = parseInt(elements.inputH.value, 10) || 0;
+  const m = parseInt(elements.inputM.value, 10) || 0;
+  const s = parseInt(elements.inputS.value, 10) || 0;
+  const sub = parseInt(elements.inputSub.value, 10) || 0;
+  
+  let totalMs = (h * 3600 + m * 60 + s) * 1000;
+  
+  if (state.subSecondMode === 'frames') {
+    const frameDurationMs = 1000 / state.frameRate;
+    totalMs += sub * frameDurationMs;
+  } else {
+    // Milliseconds
+    const padLen = elements.inputSub.value.length;
+    if (padLen === 3) totalMs += sub;
+    else if (padLen === 2) totalMs += sub * 10;
+    else if (padLen === 1) totalMs += sub * 100;
+  }
+  
+  return totalMs * state.direction;
+}
+
+// Triggers timecode shifting execution
+function runTimecodeShift() {
+  let shiftAmountMs = 0;
+  let targetTimecodeStr = '';
+  
+  if (state.mode === 'amount') {
+    shiftAmountMs = getShiftDurationMs();
+    if (shiftAmountMs === 0) {
+      updateStatus('error', 'Invalid Input', 'Shift amount must be greater than zero.');
+      return;
+    }
+  } else {
+    // Mode = Align
+    if (!state.detectedFirstTimecode) {
+      updateStatus('error', 'Align Error', 'No starting timecode detected to align.');
+      return;
+    }
+    
+    targetTimecodeStr = elements.inputTarget.value.trim();
+    const targetParsed = TimecodeUtils.findTimecodes(targetTimecodeStr)[0];
+    if (!targetParsed) {
+      updateStatus('error', 'Invalid Format', 'Target timecode format is invalid.');
+      return;
+    }
+    
+    // Calculate shift amount as difference between target and original first timecode
+    const originalMs = TimecodeUtils.toMilliseconds(
+      state.detectedFirstTimecode, 
+      state.frameRate, 
+      state.subSecondMode, 
+      state.useDropFrame
+    );
+    const targetMs = TimecodeUtils.toMilliseconds(
+      targetParsed, 
+      state.frameRate, 
+      state.subSecondMode, 
+      state.useDropFrame
+    );
+    
+    shiftAmountMs = targetMs - originalMs;
+    
+    if (shiftAmountMs === 0) {
+      updateStatus('idle', 'No Shift Needed', 'The target matches the current start timecode.');
+      return;
+    }
+  }
+
+  // Visual feedback: disable run button and show loading spinner
+  elements.btnRun.disabled = true;
+  elements.btnLoader.style.display = 'block';
+  elements.btnText.innerText = 'Processing...';
+  updateStatus('running', 'Shifting Timecodes', 'Modifying document...');
+
+  const options = {
+    scope: state.scope,
+    mode: state.mode,
+    shiftAmountMs: shiftAmountMs,
+    targetTimecode: targetTimecodeStr,
+    frameRate: state.frameRate,
+    subSecondMode: state.subSecondMode,
+    useDropFrame: state.useDropFrame
+  };
+
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    // Offline simulation
+    setTimeout(() => {
+      elements.btnRun.disabled = false;
+      elements.btnLoader.style.display = 'none';
+      elements.btnText.innerText = 'Shift Timecodes';
+      updateStatus('success', 'Completed (Simulation)', 'Found and shifted 12 timecode(s).');
+      if (state.mode === 'align') {
+        elements.detectedTimecode.innerText = targetTimecodeStr;
+      }
+    }, 1500);
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler((response) => {
+      elements.btnRun.disabled = false;
+      elements.btnLoader.style.display = 'none';
+      elements.btnText.innerText = 'Shift Timecodes';
+      
+      const count = response.count || 0;
+      const clampedCount = response.clampedCount || 0;
+      let msg = `Successfully shifted ${count} timecode(s).`;
+      if (clampedCount > 0) {
+        msg += ` (${clampedCount} were clamped to 00:00:00).`;
+      }
+      
+      if (response.timings) {
+        console.log("ABS Timecode Shifter Debug Timings:", response.timings);
+        msg += `\nTiming: ${response.timings.total}ms total (scope: ${response.timings.resolveScope}ms, read: ${response.timings.getTextTotal}ms, write: ${response.timings.replacementsTotal}ms on ${response.timings.modifiedElements}/${response.timings.elementsChecked} elements).`;
+      }
+      
+      updateStatus('success', 'Execution Completed', msg);
+      
+      // If we aligned, update our scan cache
+      if (state.mode === 'align' && count > 0) {
+        scanForFirstTimecode();
+      }
+    })
+    .withFailureHandler((err) => {
+      elements.btnRun.disabled = false;
+      elements.btnLoader.style.display = 'none';
+      elements.btnText.innerText = 'Shift Timecodes';
+      updateStatus('error', 'Execution Failed', err.message || 'An error occurred during shifting.');
+    })
+    .shiftTimecodes(options);
+}
+
+// Utility function to update the status card
+function updateStatus(type, title, description) {
+  // Remove existing indicator classes
+  elements.statusIndicator.className = 'status-indicator ' + type;
+  elements.statusTitle.innerText = title;
+  elements.statusDesc.innerText = description;
+  
+  if (type === 'error') {
+    elements.statusCard.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+  } else if (type === 'success') {
+    elements.statusCard.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+  } else if (type === 'running') {
+    elements.statusCard.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+  } else {
+    elements.statusCard.style.borderColor = 'var(--border-glass)';
+  }
+}
+
+// Launch application
+document.addEventListener('DOMContentLoaded', init);
+
+  </script>
+</body>
+</html>

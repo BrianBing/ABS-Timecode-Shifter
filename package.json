@@ -1,0 +1,15 @@
+{
+  "name": "abs-timecode-shifter",
+  "version": "1.0.0",
+  "description": "Google Docs Add-on to shift and align timecodes.",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "keywords": [
+    "google-docs",
+    "apps-script",
+    "timecode"
+  ],
+  "author": "",
+  "license": "ISC"
+}
