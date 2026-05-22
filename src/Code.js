@@ -192,6 +192,26 @@ function getFirstTimecode(scope) {
     var tDoc = new Date().getTime();
     timings.docInit = tDoc - tStart;
     
+    // Check if selection/cursor is missing to avoid throwing an error during initial scanning
+    if (scope === 'selection' && !doc.getSelection()) {
+      timings.resolveScope = new Date().getTime() - tDoc;
+      timings.total = new Date().getTime() - tStart;
+      return {
+        matchText: null,
+        timings: timings,
+        noActiveSelection: true
+      };
+    }
+    if (scope === 'from-selection' && !doc.getSelection() && !doc.getCursor()) {
+      timings.resolveScope = new Date().getTime() - tDoc;
+      timings.total = new Date().getTime() - tStart;
+      return {
+        matchText: null,
+        timings: timings,
+        noActiveSelection: true
+      };
+    }
+    
     var elements = getScopeElements(doc, scope);
     var tScope = new Date().getTime();
     timings.resolveScope = tScope - tDoc;

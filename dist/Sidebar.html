@@ -1340,7 +1340,13 @@ function handleScanSuccess(response) {
   elements.inputTarget.value = '';
   
   let desc = 'Place cursor near or select text containing a timecode.';
-  if (timings) {
+  if (response && response.noActiveSelection) {
+    if (state.scope === 'selection') {
+      desc = 'No text selected. Select a range containing timecodes.';
+    } else {
+      desc = 'No active cursor. Click inside the document to place your cursor.';
+    }
+  } else if (timings) {
     console.log("ABS Timecode Shifter Scan Timings:", timings);
     desc += ` (scan took ${timings.total}ms)`;
   }
